@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PROSHAKE — интернет-магазин протеиновых коктейлей</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-soft: rgba(255,255,255,0.05);
+      --bg-card: rgba(255,255,255,0.06);
+      --text: #ffffff;
+      --muted: #94a3b8;
+      --line: rgba(255,255,255,0.1);
+      --white: #ffffff;
+      --dark: #0b1020;
+      --success: #86efac;
+      --warning: #fcd34d;
+      --accent: #6366f1;
+      --shadow: 0 20px 50px rgba(0,0,0,0.35);
+      --radius: 22px;
+      --radius-lg: 30px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    img { max-width: 100%; display: block; }
+
+    .container {
+      width: 100%;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(11, 16, 32, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 82px;
+    }
+    .logo-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+    .logo-sub { font-size: 12px; color: var(--muted); }
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      color: #dbe4f0;
+      font-size: 14px;
+    }
+    .nav a:hover { color: var(--white); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      font-weight: 700;
+      padding: 14px 22px;
+      transition: 0.2s ease;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--white);
+      color: var(--dark);
+    }
+    .btn-primary:hover { background: #e5e7eb; }
+    .btn-outline {
+      background: transparent;
+      color: var(--white);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.05); }
+    .btn-block { width: 100%; }
+    .btn-sm { padding: 11px 16px; border-radius: 14px; }
+
+    .cart-badge {
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: var(--dark);
+      color: var(--white);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .hero {
+      padding: 72px 0 48px;
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.12), transparent 30%),
+        radial-gradient(circle at left, rgba(99,102,241,0.18), transparent 35%);
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 42px;
+      align-items: center;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: 58px;
+      line-height: 1.02;
+      font-weight: 900;
+      max-width: 760px;
+      letter-spacing: -1.5px;
+    }
+    .hero p {
+      margin-top: 18px;
+      font-size: 19px;
+      color: #d0d8e4;
+      max-width: 650px;
+    }
+    .hero-actions {
+      margin-top: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .hero-stats {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .stat {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+    }
+    .stat strong {
+      display: block;
+      font-size: 30px;
+      font-weight: 900;
+    }
+    .stat span { color: var(--muted); font-size: 14px; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .card-lg { border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+    .card-body { padding: 24px; }
+    .promo-card { padding: 28px; }
+    .promo-card-inner {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 26px;
+      background: linear-gradient(135deg, rgba(30,41,59,0.95), rgba(15,23,42,0.95));
+    }
+    .stars { color: var(--warning); letter-spacing: 2px; }
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .mini-box {
+      background: rgba(255,255,255,0.05);
+      border-radius: 18px;
+      padding: 14px;
+      text-align: center;
+    }
+    .mini-box strong { display: block; font-size: 20px; font-weight: 800; }
+    .mini-box span { color: var(--muted); font-size: 12px; }
+    .price-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .price { font-size: 34px; font-weight: 900; }
+    .old-price { color: #64748b; text-decoration: line-through; padding-bottom: 5px; }
+
+    .features-mini {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .feature-mini { padding: 18px; }
+    .feature-mini h4 { margin-bottom: 6px; font-size: 16px; }
+    .feature-mini p { font-size: 14px; color: var(--muted); }
+
+    .section { padding: 56px 0; }
+    .section-head { margin-bottom: 28px; }
+    .section-kicker {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1.06;
+      max-width: 860px;
+    }
+    .section-sub { margin-top: 10px; color: var(--muted); max-width: 780px; }
+
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+
+    .feature-card { padding: 24px; }
+    .feature-card h3 { font-size: 20px; margin-bottom: 10px; }
+    .feature-card p { color: var(--muted); font-size: 15px; }
+
+    .tabs {
+      display: inline-flex;
+      gap: 8px;
+      padding: 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 18px;
+      margin-bottom: 26px;
+    }
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: #d2dae6;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--white);
+      color: var(--dark);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .product-card { overflow: hidden; }
+    .product-card .card-body { padding: 24px; }
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .label {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(255,255,255,0.1);
+    }
+    .label-success { background: rgba(134,239,172,0.15); color: var(--success); }
+    .label-warning { background: rgba(251,191,36,0.16); color: #fde68a; }
+    .size { color: var(--muted); font-size: 12px; }
+    .product-title { font-size: 30px; font-weight: 900; line-height: 1.08; }
+    .product-flavor { color: #d4dbe5; margin-top: 4px; }
+    .product-text { margin-top: 14px; color: var(--muted); font-size: 15px; min-height: 68px; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .tag {
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      color: #e4ebf3;
+    }
+    .tag-green { background: rgba(16,185,129,0.15); color: #86efac; }
+    .product-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .bundle-card { background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); }
+    .perk-list { margin-top: 14px; display: grid; gap: 10px; }
+    .perk { color: #d6dde8; font-size: 14px; }
+
+    .split-box {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 22px;
+      padding: 28px;
+    }
+    .faq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 18px; }
+    .qa-item { padding: 18px; background: rgba(2,6,23,0.55); border: 1px solid var(--line); border-radius: 20px; }
+    .qa-item h4 { font-size: 16px; margin-bottom: 8px; }
+    .qa-item p { color: var(--muted); font-size: 14px; }
+
+    .subscribe-box { padding: 24px; background: rgba(2,6,23,0.55); border-radius: 28px; border: 1px solid var(--line); }
+    .subscribe-box h3 { font-size: 24px; margin-bottom: 8px; }
+    .subscribe-box p { color: var(--muted); font-size: 14px; }
+
+    .input {
+      width: 100%;
+      height: 50px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      color: var(--white);
+      padding: 0 16px;
+      outline: none;
+    }
+    .input::placeholder { color: #7b8ba1; }
+    .field { display: grid; gap: 8px; }
+    .field label { color: #d9e2ef; font-size: 14px; }
+    .form-grid { display: grid; gap: 14px; }
+    .tiny { color: #64748b; font-size: 12px; margin-top: 10px; }
+
+    .review-card { padding: 24px; }
+    .review-text { color: #d9e2ef; font-size: 15px; line-height: 1.8; margin-top: 10px; }
+    .review-name { margin-top: 14px; font-weight: 700; }
+
+    .faq-list { display: grid; gap: 14px; }
+    .faq-item { padding: 22px; }
+    .faq-item h4 { font-size: 18px; margin-bottom: 8px; }
+    .faq-item p { color: var(--muted); }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      padding: 32px 0;
+      margin-top: 12px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .footer p { color: var(--muted); font-size: 14px; max-width: 520px; margin-top: 10px; }
+    .footer-links {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .footer-links div { display: grid; gap: 8px; }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -420px;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      background: #0b1020;
+      border-left: 1px solid var(--line);
+      z-index: 2000;
+      transition: right 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer.open { right: 0; }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.2s ease;
+      z-index: 1900;
+    }
+    .overlay.show { opacity: 1; visibility: visible; }
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .drawer-title { font-size: 22px; font-weight: 800; }
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--white);
+      cursor: pointer;
+    }
+    .drawer-body {
+      padding: 18px 20px 20px;
+      overflow: auto;
+      flex: 1;
+    }
+    .empty-cart {
+      padding: 22px;
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      border-radius: 20px;
+      color: #d1d8e3;
+      font-size: 14px;
+    }
+    .cart-items { display: grid; gap: 12px; }
+    .cart-item {
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .cart-item-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: start;
+    }
+    .cart-item-title { font-weight: 700; }
+    .cart-item-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .cart-item-price { margin-top: 8px; font-size: 14px; }
+    .qty-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+    .qty-box button {
+      border: none;
+      background: transparent;
+      color: var(--white);
+      cursor: pointer;
+      font-size: 18px;
+      width: 18px;
+    }
+
+    .totals {
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      border-radius: 20px;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: #d2dae6;
+      font-size: 14px;
+    }
+    .totals-row.total {
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--white);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 2100;
+    }
+    .modal.show { display: flex; }
+    .modal-card {
+      width: 100%;
+      max-width: 980px;
+      background: #0b1020;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+    }
+    .modal-title { font-size: 24px; font-weight: 800; }
+    .modal-body { padding: 22px; }
+    .checkout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .pay-box, .order-box {
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      border-radius: 22px;
+    }
+    .pay-box h4, .order-box h4 { margin-bottom: 12px; font-size: 18px; }
+    .pay-option {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: #d9e1eb;
+      margin-top: 10px;
+    }
+    .order-list { display: grid; gap: 10px; color: #d9e1eb; font-size: 14px; }
+    .order-row { display: flex; justify-content: space-between; gap: 10px; }
+    .secure-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+    .success-note {
+      display: none;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.25);
+      color: #a7f3d0;
+      font-size: 14px;
+    }
+    .success-note.show { display: block; }
+
+    @media (max-width: 1080px) {
+      .hero-grid, .split-box, .checkout-grid, .footer-grid { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .hero h1 { font-size: 48px; }
+      .section-title { font-size: 36px; }
+    }
+
+    @media (max-width: 760px) {
+      .nav { display: none; }
+      .hero { padding-top: 42px; }
+      .hero-grid, .grid-4, .grid-3, .grid-2, .hero-stats, .features-mini, .faq-grid, .product-actions { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 36px; }
+      .section-title { font-size: 30px; }
+      .product-title { font-size: 24px; }
+      .header-inner { min-height: 74px; }
+      .drawer { max-width: 100%; }
+      .modal-body { padding: 18px; }
+      .modal-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay"></div>
+
+  <header class="header">
+    <div class="container header-inner">
+      <div>
+        <div class="logo-title">PROSHAKE</div>
+        <div class="logo-sub">Интернет-магазин протеиновых коктейлей</div>
+      </div>
+
+      <nav class="nav">
+        <a href="#catalog">Каталог</a>
+        <a href="#benefits">Преимущества</a>
+        <a href="#reviews">Отзывы</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <button class="btn btn-primary" id="openCartBtn">
+        <span>Корзина</span>
+        <span class="cart-badge" id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="pill">Вкусно. Удобно. Результативно.</div>
+        <h1>Протеиновые коктейли, которые хочется купить с первого экрана</h1>
+        <p>Помогаем быстрее восстанавливаться, легче закрывать норму белка и держать форму — без сложностей, с простой покупкой в пару кликов.</p>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#catalog">Выбрать вкус</a>
+          <a class="btn btn-outline" href="#benefits">Почему нам доверяют</a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat"><strong>24–28 г</strong><span>белка в порции</span></div>
+          <div class="stat"><strong>1 минута</strong><span>на оформление заказа</span></div>
+          <div class="stat"><strong>4.9/5</strong><span>средняя оценка клиентов</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card card-lg promo-card">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px;">
+            <div class="label label-success">Выбор недели</div>
+            <div class="stars">★★★★★</div>
+          </div>
+
+          <div class="promo-card-inner">
+            <div style="font-size:12px; text-transform:uppercase; letter-spacing:3px; color:var(--muted);">PROSHAKE</div>
+            <div style="font-size:38px; font-weight:900; margin-top:8px; line-height:1.04;">Whey Pro Ultra</div>
+            <div style="margin-top:4px; color:#d5ddeb;">Ванильный крем • 900 г</div>
+
+            <div class="mini-grid">
+              <div class="mini-box"><strong>24 г</strong><span>белка</span></div>
+              <div class="mini-box"><strong>0 г</strong><span>сахара*</span></div>
+              <div class="mini-box"><strong>30</strong><span>порций</span></div>
+            </div>
+
+            <div class="price-row">
+              <div class="price">16 990 ₸</div>
+              <div class="old-price">20 990 ₸</div>
+            </div>
+
+            <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="addToCartById(1)">Купить сейчас</button>
+          </div>
+        </div>
+
+        <div class="features-mini">
+          <div class="card feature-mini">
+            <h4>Проверенный состав</h4>
+            <p>Понятная формула без лишнего.</p>
+          </div>
+          <div class="card feature-mini">
+            <h4>Быстрая доставка</h4>
+            <p>Удобно заказать домой или в офис.</p>
+          </div>
+          <div class="card feature-mini">
+            <h4>Лёгкий старт</h4>
+            <p>Подберём вкус и формат под цель.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="benefits">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-kicker">Почему сайт продаёт</div>
+        <h2 class="section-title">Всё построено так, чтобы клиент быстрее принял решение</h2>
+      </div>
+
+      <div class="grid-4">
+        <div class="card feature-card">
+          <h3>Сразу видно выгоду</h3>
+          <p>Старая и новая цена, наборы, бесплатная доставка от суммы.</p>
+        </div>
+        <div class="card feature-card">
+          <h3>Минимум трения</h3>
+          <p>Простая корзина и короткое оформление заказа без перегруза.</p>
+        </div>
+        <div class="card feature-card">
+          <h3>Больше доверия</h3>
+          <p>Отзывы, преимущества, безопасность оплаты и понятная подача.</p>
+        </div>
+        <div class="card feature-card">
+          <h3>Готово к оплате</h3>
+          <p>Логика под карты, Apple Pay, Google Pay и оплату при получении.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="catalog">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-kicker">Каталог</div>
+        <h2 class="section-title">Подберите коктейль под свою цель</h2>
+        <div class="section-sub">Самый простой путь к покупке — понятный выбор без лишних шагов.</div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="products">Товары</button>
+        <button class="tab-btn" data-tab="bundles">Наборы</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-products">
+        <div class="grid-3" id="productsGrid"></div>
+      </div>
+
+      <div class="tab-panel" id="tab-bundles">
+        <div class="grid-2" id="bundlesGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="card split-box">
+        <div>
+          <div class="section-kicker">Сомневается каждый новый клиент</div>
+          <h2 class="section-title" style="font-size:38px;">Поэтому здесь сразу закрываются основные возражения</h2>
+          <div class="faq-grid">
+            <div class="qa-item">
+              <h4>Будет ли вкусно?</h4>
+              <p>Да — акцент на вкусы, понятное описание и отзывы реальных покупателей.</p>
+            </div>
+            <div class="qa-item">
+              <h4>Не будет ли тяжести?</h4>
+              <p>Подача построена через комфорт, растворимость и удобство использования.</p>
+            </div>
+            <div class="qa-item">
+              <h4>А вдруг не подойдёт?</h4>
+              <p>Есть рекомендации по целям: форма, восстановление, набор.</p>
+            </div>
+            <div class="qa-item">
+              <h4>Можно ли быстро купить?</h4>
+              <p>Да — корзина и checkout специально сокращены до минимума.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="subscribe-box">
+          <h3>Получить персональную скидку 10%</h3>
+          <p>Оставьте email и получите промокод на первый заказ.</p>
+          <div class="form-grid" style="margin-top:16px;">
+            <input class="input" id="promoEmail" placeholder="Введите email" />
+            <button class="btn btn-primary btn-block" onclick="getPromoCode()">Получить промокод</button>
+          </div>
+          <div class="tiny">Нажимая кнопку, пользователь соглашается с условиями обработки данных.</div>
+          <div class="success-note" id="promoSuccess">Промокод отправлен. Используйте: FIRST10</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="reviews">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-kicker">Отзывы</div>
+        <h2 class="section-title">Социальное доказательство, которое усиливает конверсию</h2>
+      </div>
+      <div class="grid-3" id="reviewsGrid"></div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="container" style="max-width:980px;">
+      <div class="section-head" style="text-align:center;">
+        <div class="section-kicker">FAQ</div>
+        <h2 class="section-title" style="margin:0 auto;">Частые вопросы перед покупкой</h2>
+      </div>
+      <div class="faq-list">
+        <div class="card faq-item">
+          <h4>Какой коктейль выбрать?</h4>
+          <p>Для восстановления — Whey Pro Ultra, для контроля аппетита — Lean Shake Pro, для набора — Mass Recovery Blend.</p>
+        </div>
+        <div class="card faq-item">
+          <h4>Как быстро оформить заказ?</h4>
+          <p>Добавьте товар в корзину, укажите контакты и выберите способ оплаты. Всё максимально сокращено.</p>
+        </div>
+        <div class="card faq-item">
+          <h4>Какие способы оплаты поддерживаются?</h4>
+          <p>На макете предусмотрены онлайн-оплата картой, Apple Pay / Google Pay и оплата при получении.</p>
+        </div>
+        <div class="card faq-item">
+          <h4>Есть ли доставка?</h4>
+          <p>Да. Также реализована логика бесплатной доставки от суммы заказа.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div>
+        <div class="logo-title" style="font-size:26px;">PROSHAKE</div>
+        <p>Интернет-магазин протеиновых коктейлей с продающей структурой, простой корзиной и логикой быстрого оформления заказа.</p>
+      </div>
+      <div class="footer-links">
+        <div>
+          <span>Каталог</span>
+          <span>Доставка</span>
+          <span>Оплата</span>
+        </div>
+        <div>
+          <span>Политика конфиденциальности</span>
+          <span>Публичная оферта</span>
+          <span>Контакты</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <aside class="drawer" id="cartDrawer">
+    <div class="drawer-head">
+      <div class="drawer-title">Корзина</div>
+      <button class="icon-btn" id="closeCartBtn">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div id="cartItemsContainer"></div>
+      <div class="totals">
+        <div class="totals-row"><span>Сумма</span><span id="subtotalEl">0 ₸</span></div>
+        <div class="totals-row"><span>Скидка</span><span id="discountEl">- 0 ₸</span></div>
+        <div class="totals-row"><span>Доставка</span><span id="shippingEl">Бесплатно</span></div>
+        <div class="totals-row total"><span>Итого</span><span id="totalEl">0 ₸</span></div>
+        <button class="btn btn-primary btn-block" id="checkoutBtn" disabled>Перейти к оплате</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="modal" id="checkoutModal">
+    <div class="overlay show" id="modalOverlay"></div>
+    <div class="modal-card" style="position:relative; z-index:1;">
+      <div class="modal-head">
+        <div class="modal-title">Оформление заказа</div>
+        <button class="icon-btn" id="closeCheckoutBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="checkout-grid">
+          <div class="form-grid">
+            <div class="field">
+              <label>Имя</label>
+              <input class="input" id="checkoutName" placeholder="Ваше имя" />
+            </div>
+            <div class="field">
+              <label>Телефон</label>
+              <input class="input" id="checkoutPhone" placeholder="+7 (___) ___-__-__" />
+            </div>
+            <div class="field">
+              <label>Адрес доставки</label>
+              <input class="input" id="checkoutAddress" placeholder="Город, улица, дом" />
+            </div>
+            <div class="field">
+              <label>Email</label>
+              <input class="input" id="checkoutEmail" placeholder="example@mail.com" />
+            </div>
+          </div>
+
+          <div style="display:grid; gap:14px;">
+            <div class="pay-box">
+              <h4>Способ оплаты</h4>
+              <div class="pay-option">Оплата картой онлайн</div>
+              <div class="pay-option">Apple Pay / Google Pay</div>
+              <div class="pay-option">Оплата при получении</div>
+            </div>
+
+            <div class="order-box">
+              <h4>Ваш заказ</h4>
+              <div class="order-list" id="checkoutOrderList"></div>
+              <div class="totals-row total" style="margin-top:12px; padding-top:12px;"><span>К оплате</span><span id="checkoutTotalEl">0 ₸</span></div>
+            </div>
+
+            <button class="btn btn-primary btn-block" onclick="submitOrder()">Оплатить сейчас</button>
+            <div class="secure-note">Безопасная оплата. Шифрование платёжных данных.</div>
+            <div class="success-note" id="orderSuccess">Заказ оформлен. Здесь затем подключается реальная платёжная система.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const products = [
+      {
+        id: 1,
+        name: 'Whey Pro Ultra',
+        flavor: 'Ванильный крем',
+        price: 16990,
+        oldPrice: 20990,
+        protein: '24 г белка',
+        size: '900 г',
+        description: 'Сывороточный протеин для восстановления и роста мышц. Быстро растворяется, приятный вкус, без лишней тяжести.',
+        benefits: ['Рост и восстановление', 'Быстрое усвоение', 'Мягкий вкус'],
+        highlight: 'Хит продаж'
+      },
+      {
+        id: 2,
+        name: 'Lean Shake Pro',
+        flavor: 'Шоколад',
+        price: 14990,
+        oldPrice: 18990,
+        protein: '22 г белка',
+        size: '750 г',
+        description: 'Белковый коктейль для контроля аппетита и комфортного снижения веса. Идеален как быстрый перекус.',
+        benefits: ['Контроль аппетита', 'Удобно вместо перекуса', 'Насыщает надолго'],
+        highlight: 'Для формы'
+      },
+      {
+        id: 3,
+        name: 'Mass Recovery Blend',
+        flavor: 'Клубника',
+        price: 18990,
+        oldPrice: 22990,
+        protein: '28 г белка',
+        size: '1200 г',
+        description: 'Высокобелковая смесь после интенсивных тренировок. Подходит для набора и быстрого восполнения ресурсов.',
+        benefits: ['После тяжёлых тренировок', 'Поддержка набора', 'Сбалансированный состав'],
+        highlight: 'Для набора'
+      }
+    ];
+
+    const bundles = [
+      {
+        id: 'bundle-1',
+        title: 'Стартовый набор',
+        subtitle: '2 вкуса + шейкер',
+        price: 29990,
+        oldPrice: 37990,
+        perks: ['Экономия 8000 ₸', 'Идеально для первого заказа', 'Подарочный шейкер']
+      },
+      {
+        id: 'bundle-2',
+        title: 'Максимум результата',
+        subtitle: '3 банки + бесплатная доставка',
+        price: 45990,
+        oldPrice: 59990,
+        perks: ['Лучшее предложение', 'Хватает надолго', 'Самая выгодная цена за порцию']
+      }
+    ];
+
+    const reviews = [
+      {
+        name: 'Алексей',
+        text: 'Вкус реально приятный, без химозности. Пью после тренировки — восстановление стало ощутимо лучше.'
+      },
+      {
+        name: 'Марина',
+        text: 'Брала для перекусов на работе. Очень удобно, насыщает и не тянет на сладкое.'
+      },
+      {
+        name: 'Данияр',
+        text: 'Сайт понятный, заказ оформил за пару минут. Привезли быстро, упаковка отличная.'
+      }
+    ];
+
+    let cart = [];
+
+    function formatPrice(value) {
+      return new Intl.NumberFormat('ru-RU').format(value) + ' ₸';
+    }
+
+    function renderProducts() {
+      const container = document.getElementById('productsGrid');
+      container.innerHTML = products.map(product => `
+        <div class="card product-card">
+          <div class="card-body">
+            <div class="top-row">
+              <div class="label">${product.highlight}</div>
+              <div class="size">${product.size}</div>
+            </div>
+            <div class="product-title">${product.name}</div>
+            <div class="product-flavor">${product.flavor}</div>
+            <div class="product-text">${product.description}</div>
+            <div class="tag-list">
+              <span class="tag tag-green">${product.protein}</span>
+              ${product.benefits.map(b => `<span class="tag">${b}</span>`).join('')}
+            </div>
+            <div class="price-row">
+              <div class="price" style="font-size:30px;">${formatPrice(product.price)}</div>
+              <div class="old-price">${formatPrice(product.oldPrice)}</div>
+            </div>
+            <div class="product-actions">
+              <button class="btn btn-primary" onclick="addToCartById(${product.id})">В корзину</button>
+              <button class="btn btn-outline" onclick="scrollToFAQ()">Подробнее</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderBundles() {
+      const container = document.getElementById('bundlesGrid');
+      container.innerHTML = bundles.map(bundle => `
+        <div class="card bundle-card">
+          <div class="card-body">
+            <div class="label label-warning">Выгодный набор</div>
+            <div class="product-title" style="margin-top:14px;">${bundle.title}</div>
+            <div class="product-flavor">${bundle.subtitle}</div>
+            <div class="perk-list">
+              ${bundle.perks.map(perk => `<div class="perk">✓ ${perk}</div>`).join('')}
+            </div>
+            <div class="price-row">
+              <div class="price">${formatPrice(bundle.price)}</div>
+              <div class="old-price">${formatPrice(bundle.oldPrice)}</div>
+            </div>
+            <button class="btn btn-primary btn-block" style="margin-top:18px;" onclick="addBundleToCart('${bundle.id}')">Добавить набор</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderReviews() {
+      const container = document.getElementById('reviewsGrid');
+      container.innerHTML = reviews.map(review => `
+        <div class="card review-card">
+          <div class="stars">★★★★★</div>
+          <div class="review-text">“${review.text}”</div>
+          <div class="review-name">${review.name}</div>
+        </div>
+      `).join('');
+    }
+
+    function addToCartById(id) {
+      const product = products.find(item => item.id === id);
+      if (!product) return;
+      addToCart(product);
+    }
+
+    function addBundleToCart(id) {
+      const bundle = bundles.find(item => item.id === id);
+      if (!bundle) return;
+      const existing = cart.find(item => item.id === id);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ ...bundle, qty: 1, isBundle: true });
+      }
+      renderCart();
+      openCart();
+    }
+
+    function addToCart(item) {
+      const existing = cart.find(x => x.id === item.id);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ ...item, qty: 1 });
+      }
+      renderCart();
+      openCart();
+    }
+
+    function updateQty(id, delta) {
+      cart = cart.map(item => item.id === id ? { ...item, qty: item.qty + delta } : item).filter(item => item.qty > 0);
+      renderCart();
+    }
+
+    function getCartTotals() {
+      const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+      const discount = subtotal >= 35000 ? 2500 : 0;
+      const shipping = subtotal >= 25000 || subtotal === 0 ? 0 : 1500;
+      const total = Math.max(subtotal - discount + shipping, 0);
+      return { subtotal, discount, shipping, total };
+    }
+
+    function renderCart() {
+      const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
+      document.getElementById('cartCount').textContent = cartCount;
+
+      const container = document.getElementById('cartItemsContainer');
+      const { subtotal, discount, shipping, total } = getCartTotals();
+      const checkoutBtn = document.getElementById('checkoutBtn');
+
+      if (!cart.length) {
+        container.innerHTML = '<div class="empty-cart">Корзина пока пустая. Добавьте товар — оформление займёт меньше минуты.</div>';
+        checkoutBtn.disabled = true;
+      } else {
+        container.innerHTML = `
+          <div class="cart-items">
+            ${cart.map(item => `
+              <div class="cart-item">
+                <div class="cart-item-top">
+                  <div>
+                    <div class="cart-item-title">${item.name || item.title}</div>
+                    <div class="cart-item-sub">${item.flavor || item.subtitle || item.size || ''}</div>
+                    <div class="cart-item-price">${formatPrice(item.price)}</div>
+                  </div>
+                  <div class="qty-box">
+                    <button onclick="updateQty('${item.id}', -1)">−</button>
+                    <span>${item.qty}</span>
+                    <button onclick="updateQty('${item.id}', 1)">+</button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        checkoutBtn.disabled = false;
+      }
+
+      document.getElementById('subtotalEl').textContent = formatPrice(subtotal);
+      document.getElementById('discountEl').textContent = '- ' + formatPrice(discount);
+      document.getElementById('shippingEl').textContent = shipping === 0 ? 'Бесплатно' : formatPrice(shipping);
+      document.getElementById('totalEl').textContent = formatPrice(total);
+      renderCheckoutSummary();
+    }
+
+    function renderCheckoutSummary() {
+      const orderList = document.getElementById('checkoutOrderList');
+      const checkoutTotalEl = document.getElementById('checkoutTotalEl');
+      if (!orderList || !checkoutTotalEl) return;
+      const { total } = getCartTotals();
+
+      orderList.innerHTML = cart.length ? cart.map(item => `
+        <div class="order-row">
+          <span>${item.name || item.title} × ${item.qty}</span>
+          <span>${formatPrice(item.price * item.qty)}</span>
+        </div>
+      `).join('') : '<div class="secure-note">Корзина пуста</div>';
+
+      checkoutTotalEl.textContent = formatPrice(total);
+    }
+
+    function openCart() {
+      document.getElementById('cartDrawer').classList.add('open');
+      document.getElementById('overlay').classList.add('show');
+    }
+
+    function closeCart() {
+      document.getElementById('cartDrawer').classList.remove('open');
+      document.getElementById('overlay').classList.remove('show');
+    }
+
+    function openCheckout() {
+      if (!cart.length) return;
+      document.getElementById('checkoutModal').classList.add('show');
+    }
+
+    function closeCheckout() {
+      document.getElementById('checkoutModal').classList.remove('show');
+    }
+
+    function getPromoCode() {
+      const email = document.getElementById('promoEmail').value.trim();
+      if (!email) {
+        alert('Введите email');
+        return;
+      }
+      document.getElementById('promoSuccess').classList.add('show');
+    }
+
+    function submitOrder() {
+      const name = document.getElementById('checkoutName').value.trim();
+      const phone = document.getElementById('checkoutPhone').value.trim();
+      const address = document.getElementById('checkoutAddress').value.trim();
+      if (!name || !phone || !address) {
+        alert('Заполните имя, телефон и адрес доставки');
+        return;
+      }
+      document.getElementById('orderSuccess').classList.add('show');
+    }
+
+    function scrollToFAQ() {
+      document.getElementById('faq').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function initTabs() {
+      const buttons = document.querySelectorAll('.tab-btn');
+      const panels = {
+        products: document.getElementById('tab-products'),
+        bundles: document.getElementById('tab-bundles')
+      };
+
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          buttons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          Object.values(panels).forEach(panel => panel.classList.remove('active'));
+          panels[btn.dataset.tab].classList.add('active');
+        });
+      });
+    }
+
+    document.getElementById('openCartBtn').addEventListener('click', openCart);
+    document.getElementById('closeCartBtn').addEventListener('click', closeCart);
+    document.getElementById('overlay').addEventListener('click', closeCart);
+    document.getElementById('checkoutBtn').addEventListener('click', openCheckout);
+    document.getElementById('closeCheckoutBtn').addEventListener('click', closeCheckout);
+    document.getElementById('modalOverlay').addEventListener('click', closeCheckout);
+
+    renderProducts();
+    renderBundles();
+    renderReviews();
+    renderCart();
+    initTabs();
+  </script>
+</body>
+</html>
