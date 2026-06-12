@@ -227,14 +227,10 @@ function restartHeroTimeline() {
     const bar = document.getElementById('heroSliderTimelineBar');
     if (!bar) return;
 
-    bar.style.transition = 'none';
-    bar.style.width = '0%';
-    // force reflow
+    bar.style.animation = 'none';
+    bar.style.transform = 'scaleX(0)';
     void bar.offsetWidth;
-    bar.style.transition = `width ${HERO_SLIDE_DURATION}ms linear`;
-    requestAnimationFrame(() => {
-        bar.style.width = '100%';
-    });
+    bar.style.animation = `heroTimelineFill ${HERO_SLIDE_DURATION}ms linear forwards`;
 }
 
 function initHeroSliderControls() {

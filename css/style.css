@@ -3491,3 +3491,107 @@ html { scroll-behavior: smooth; }
         transition-duration: .01ms !important;
     }
 }
+
+/* === PATCH: restore stable hero timeline, stacked mobile cards, and sane image viewer size === */
+@keyframes heroTimelineFill {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+.hero-slider-timeline-bar {
+    width: 100% !important;
+    transform: scaleX(0);
+    transform-origin: left center;
+    will-change: transform;
+}
+
+/* Main site cards should stay visually rich/cropped; full image is only in the viewer. */
+.work-image,
+.work-item video,
+.hero-featured-media > img,
+.hero-featured-media > video,
+.hero-featured-media model-viewer,
+.project-main-image,
+.project-main-video,
+.project-gallery-item img,
+.project-gallery-item video,
+.related-work-media img,
+.related-work-media video,
+.related-work-media .file-preview-placeholder {
+    object-fit: cover !important;
+}
+
+/* Desktop lightbox: do not let images exceed the visible screen. */
+.project-media-lightbox {
+    padding: 64px 96px 82px !important;
+}
+
+.project-media-lightbox-stage {
+    width: min(1040px, calc(100vw - 220px)) !important;
+    height: min(72vh, 680px) !important;
+    max-width: calc(100vw - 220px) !important;
+    max-height: calc(100vh - 170px) !important;
+}
+
+.project-media-lightbox-stage img,
+.project-media-lightbox-stage video {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+}
+
+@media (max-width: 900px) {
+    .project-media-lightbox {
+        padding: 58px 56px 76px !important;
+    }
+    .project-media-lightbox-stage {
+        width: min(100%, calc(100vw - 112px)) !important;
+        height: min(72vh, calc(100dvh - 152px)) !important;
+        max-width: calc(100vw - 112px) !important;
+        max-height: calc(100dvh - 152px) !important;
+    }
+}
+
+@media (max-width: 640px) {
+    /* No horizontal carousel in categories: projects are again stacked, max 3 visible. */
+    .category-works-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        overflow: visible !important;
+        gap: 16px !important;
+        padding: 0 !important;
+        scroll-snap-type: none !important;
+    }
+
+    .category-works-grid .work-item {
+        width: 100% !important;
+        flex: initial !important;
+        scroll-snap-align: unset !important;
+        display: block !important;
+    }
+
+    .project-category-section.has-extra-projects:not(.is-expanded) .category-works-grid .work-item:nth-child(n + 4) {
+        display: none !important;
+    }
+
+    .project-category-section.has-extra-projects.is-expanded .category-works-grid .work-item:nth-child(n + 4) {
+        display: block !important;
+    }
+
+    .project-category-section.has-extra-projects .category-show-more {
+        display: inline-flex !important;
+    }
+
+    .project-media-lightbox {
+        padding: 56px 12px 70px !important;
+    }
+
+    .project-media-lightbox-stage {
+        width: calc(100vw - 24px) !important;
+        height: calc(100dvh - 138px) !important;
+        max-width: calc(100vw - 24px) !important;
+        max-height: calc(100dvh - 138px) !important;
+    }
+}
