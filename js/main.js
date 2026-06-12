@@ -5,7 +5,9 @@ const portfolioState = {
     activeFilter: 'all',
     heroWorks: [],
     heroCurrentIndex: 0,
-    heroAutoplay: null
+    heroAutoplay: null,
+    lightboxItems: [],
+    lightboxIndex: 0
 };
 
 const HERO_SLIDE_DURATION = 5000;
@@ -225,13 +227,22 @@ function initProjectModal() {
     });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeProjectModal();
+        if (e.key === 'Escape') {
+            if (document.getElementById('projectMediaLightbox')?.classList.contains('active')) {
+                closeMediaLightbox();
+                return;
+            }
+            closeProjectModal();
+        }
+        if (e.key === 'ArrowLeft') changeMediaLightbox(-1);
+        if (e.key === 'ArrowRight') changeMediaLightbox(1);
     });
 }
 
 function closeProjectModal() {
     const modal = document.getElementById('projectModal');
     if (!modal) return;
+    closeMediaLightbox();
     modal.classList.remove('active');
     document.body.classList.remove('modal-open');
     portfolioState.activeWorkId = null;
@@ -490,7 +501,14 @@ function openProjectModal(id) {
         card.addEventListener('click', () => openProjectModal(card.dataset.relatedId));
     });
 
-    content.querySelectorAll('.project-gallery-item').forEach(item => {
+    content.querySelectorAll('[data-gallery-lightbox]').forEach(item => {
+        item.addEventListener('click', () => {
+            const index = Array.from(content.querySelectorAll('[data-gallery-lightbox]')).indexOf(item);
+            openMediaLightbox(content, Math.max(0, index));
+        });
+    });
+
+    content.querySelectorAll('.project-gallery-item:not([data-gallery-lightbox])').forEach(item => {
         item.addEventListener('click', () => {
             const href = item.getAttribute('data-file-url');
             if (href) window.open(href, '_blank', 'noopener');
@@ -506,6 +524,13 @@ function buildProjectModalMarkup(work) {
     const gallery = Array.isArray(work.gallery) ? work.gallery : [];
     const paragraphs = splitTextToParagraphs(work.detailedDescription || work.description || '');
     const related = getRelatedWorks(work);
+    const relatedLinks = [
+        work.repository ? `<a href="${PortfolioStorage.escapeHtml(work.repository)}" target="_blank" rel="noopener noreferrer">Репозиторий</a>` : '',
+        work.demoUrl ? `<a href="${PortfolioStorage.escapeHtml(work.demoUrl)}" target="_blank" rel="noopener noreferrer">Демо</a>` : '',
+        work.caseUrl ? `<a href="${PortfolioStorage.escapeHtml(work.caseUrl)}" target="_blank" rel="noopener noreferrer">Кейс / статья</a>` : '',
+        work.videoUrl ? `<a href="${PortfolioStorage.escapeHtml(work.videoUrl)}" target="_blank" rel="noopener noreferrer">Видео</a>` : '',
+        work.extraUrl ? `<a href="${PortfolioStorage.escapeHtml(work.extraUrl)}" target="_blank" rel="noopener noreferrer">Дополнительная ссылка</a>` : ''
+    ].filter(Boolean);
 
     return `
         <div class="project-detail">
@@ -533,29 +558,24 @@ function buildProjectModalMarkup(work) {
                 </div>
             </div>
 
-            <div class="project-section-grid">
+            <div class="project-section-grid ${relatedLinks.length ? '' : 'single'}">
                 <section class="project-section">
                     <h3>О проекте</h3>
                     ${paragraphs.length ? paragraphs.map(text => `<p>${PortfolioStorage.escapeHtml(text)}</p>`).join('') : '<p>Подробности пока не добавлены.</p>'}
                 </section>
-                <section class="project-section">
-                    <h3>Связанный контент</h3>
-                    <div class="project-related-links">
-                        ${work.repository ? `<a href="${PortfolioStorage.escapeHtml(work.repository)}" target="_blank" rel="noopener noreferrer">Репозиторий</a>` : ''}
-                        ${work.demoUrl ? `<a href="${PortfolioStorage.escapeHtml(work.demoUrl)}" target="_blank" rel="noopener noreferrer">Демо</a>` : ''}
-                        ${work.caseUrl ? `<a href="${PortfolioStorage.escapeHtml(work.caseUrl)}" target="_blank" rel="noopener noreferrer">Кейс / статья</a>` : ''}
-                        ${work.videoUrl ? `<a href="${PortfolioStorage.escapeHtml(work.videoUrl)}" target="_blank" rel="noopener noreferrer">Видео</a>` : ''}
-                        ${work.extraUrl ? `<a href="${PortfolioStorage.escapeHtml(work.extraUrl)}" target="_blank" rel="noopener noreferrer">Дополнительная ссылка</a>` : ''}
-                        
-                    </div>
-                </section>
+                ${relatedLinks.length ? `
+                    <section class="project-section project-related-section">
+                        <h3>Связанный контент</h3>
+                        <div class="project-related-links">${relatedLinks.join('')}</div>
+                    </section>
+                ` : ''}
             </div>
 
             ${gallery.length ? `
                 <section class="project-section">
                     <h3>Галерея и дополнительные файлы</h3>
                     <div class="project-gallery-grid">
-                        ${gallery.map(item => renderGalleryItem(item)).join('')}
+                        ${gallery.map((item, index) => renderGalleryItem(item, index)).join('')}
                     </div>
                 </section>
             ` : ''}
@@ -612,25 +632,27 @@ function renderFactCard(label, value) {
     return `<div class="project-stat-card"><span>${PortfolioStorage.escapeHtml(label)}</span><strong>${PortfolioStorage.escapeHtml(value)}</strong></div>`;
 }
 
-function renderGalleryItem(item) {
+function renderGalleryItem(item, index = 0) {
     const url = rememberObjectUrl(PortfolioStorage.createObjectUrl(item));
     const type = PortfolioStorage.getMimeCategory(item.type, item.name);
 
     if (type === 'image') {
         return `
-            <div class="project-gallery-item" data-file-url="${url}">
+            <button type="button" class="project-gallery-item project-gallery-media" data-file-url="${url}" data-gallery-lightbox="true" data-lightbox-index="${index}" data-lightbox-type="image" data-lightbox-name="${PortfolioStorage.escapeHtml(item.name)}">
                 <img src="${url}" alt="${PortfolioStorage.escapeHtml(item.name)}">
+                <div class="project-gallery-zoom">Открыть</div>
                 <div class="project-gallery-caption">${PortfolioStorage.escapeHtml(item.name)}</div>
-            </div>
+            </button>
         `;
     }
 
     if (type === 'video') {
         return `
-            <div class="project-gallery-item" data-file-url="${url}">
+            <button type="button" class="project-gallery-item project-gallery-media" data-file-url="${url}" data-gallery-lightbox="true" data-lightbox-index="${index}" data-lightbox-type="video" data-lightbox-name="${PortfolioStorage.escapeHtml(item.name)}">
                 <video src="${url}" muted playsinline preload="metadata"></video>
+                <div class="project-gallery-zoom">Открыть</div>
                 <div class="project-gallery-caption">${PortfolioStorage.escapeHtml(item.name)}</div>
-            </div>
+            </button>
         `;
     }
 
@@ -659,6 +681,90 @@ function renderGalleryItem(item) {
             <div class="project-gallery-caption">${PortfolioStorage.escapeHtml(item.name)}</div>
         </div>
     `;
+}
+
+function ensureMediaLightbox() {
+    let lightbox = document.getElementById('projectMediaLightbox');
+    if (lightbox) return lightbox;
+
+    lightbox = document.createElement('div');
+    lightbox.id = 'projectMediaLightbox';
+    lightbox.className = 'project-media-lightbox';
+    lightbox.innerHTML = `
+        <button type="button" class="project-media-lightbox-close" aria-label="Закрыть">×</button>
+        <button type="button" class="project-media-lightbox-nav prev" aria-label="Предыдущее изображение">‹</button>
+        <div class="project-media-lightbox-stage"></div>
+        <button type="button" class="project-media-lightbox-nav next" aria-label="Следующее изображение">›</button>
+        <div class="project-media-lightbox-footer">
+            <span class="project-media-lightbox-name"></span>
+            <span class="project-media-lightbox-counter"></span>
+        </div>
+    `;
+    document.body.appendChild(lightbox);
+
+    lightbox.addEventListener('click', (event) => {
+        if (event.target === lightbox) closeMediaLightbox();
+    });
+    lightbox.querySelector('.project-media-lightbox-close')?.addEventListener('click', closeMediaLightbox);
+    lightbox.querySelector('.project-media-lightbox-nav.prev')?.addEventListener('click', () => changeMediaLightbox(-1));
+    lightbox.querySelector('.project-media-lightbox-nav.next')?.addEventListener('click', () => changeMediaLightbox(1));
+
+    return lightbox;
+}
+
+function openMediaLightbox(container, index = 0) {
+    const items = Array.from(container.querySelectorAll('[data-gallery-lightbox]')).map(item => ({
+        url: item.dataset.fileUrl || '',
+        type: item.dataset.lightboxType || 'image',
+        name: item.dataset.lightboxName || ''
+    })).filter(item => item.url);
+
+    if (!items.length) return;
+
+    portfolioState.lightboxItems = items;
+    portfolioState.lightboxIndex = Math.max(0, Math.min(index, items.length - 1));
+    ensureMediaLightbox().classList.add('active');
+    renderMediaLightbox();
+}
+
+function renderMediaLightbox() {
+    const lightbox = ensureMediaLightbox();
+    const items = portfolioState.lightboxItems || [];
+    const current = items[portfolioState.lightboxIndex];
+    if (!current) return;
+
+    const stage = lightbox.querySelector('.project-media-lightbox-stage');
+    const name = lightbox.querySelector('.project-media-lightbox-name');
+    const counter = lightbox.querySelector('.project-media-lightbox-counter');
+    const prev = lightbox.querySelector('.project-media-lightbox-nav.prev');
+    const next = lightbox.querySelector('.project-media-lightbox-nav.next');
+
+    stage.innerHTML = current.type === 'video'
+        ? `<video src="${current.url}" controls autoplay playsinline></video>`
+        : `<img src="${current.url}" alt="${PortfolioStorage.escapeHtml(current.name)}">`;
+    name.textContent = current.name || 'Файл проекта';
+    counter.textContent = `${portfolioState.lightboxIndex + 1} / ${items.length}`;
+
+    const hasMany = items.length > 1;
+    prev.hidden = !hasMany;
+    next.hidden = !hasMany;
+}
+
+function changeMediaLightbox(direction = 1) {
+    const lightbox = document.getElementById('projectMediaLightbox');
+    if (!lightbox?.classList.contains('active')) return;
+    const items = portfolioState.lightboxItems || [];
+    if (items.length <= 1) return;
+    portfolioState.lightboxIndex = (portfolioState.lightboxIndex + direction + items.length) % items.length;
+    renderMediaLightbox();
+}
+
+function closeMediaLightbox() {
+    const lightbox = document.getElementById('projectMediaLightbox');
+    if (!lightbox) return;
+    lightbox.classList.remove('active');
+    const stage = lightbox.querySelector('.project-media-lightbox-stage');
+    if (stage) stage.innerHTML = '';
 }
 
 function getRelatedWorks(currentWork) {
