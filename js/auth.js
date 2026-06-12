@@ -3,11 +3,6 @@ const PortfolioAuth = (() => {
     let currentUser = null;
 
     async function ensureSetup() {
-        if (!PortfolioSupabase) {
-            currentSession = null;
-            currentUser = null;
-            return null;
-        }
         const { data, error } = await PortfolioSupabase.auth.getSession();
         if (error) {
             console.warn('Supabase session error:', error.message);
@@ -35,7 +30,6 @@ const PortfolioAuth = (() => {
     }
 
     async function login(username, password) {
-        if (!PortfolioSupabase) return { ok: false, message: 'Supabase не загружен. Проверьте подключение к интернету.' };
         const email = String(username || '').trim();
         if (!email || !password) {
             return { ok: false, message: 'Введите email и пароль.' };
@@ -56,14 +50,12 @@ const PortfolioAuth = (() => {
     }
 
     async function logout() {
-        if (!PortfolioSupabase) return;
         await PortfolioSupabase.auth.signOut();
         currentSession = null;
         currentUser = null;
     }
 
     async function changePassword(currentPassword, newPassword) {
-        if (!PortfolioSupabase) return { ok: false, message: 'Supabase не загружен.' };
         const email = currentUser?.email;
         if (!email) {
             return { ok: false, message: 'Сначала войдите в админку.' };
