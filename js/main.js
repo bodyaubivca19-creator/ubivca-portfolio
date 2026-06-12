@@ -10,7 +10,9 @@ const portfolioState = {
     lightboxIndex: 0,
     heroTouchStartX: 0,
     heroTouchStartY: 0,
-    suppressHeroClickUntil: 0
+    suppressHeroClickUntil: 0,
+    heroDirection: 1,
+    lightboxDirection: 1
 };
 
 const HERO_SLIDE_DURATION = 5000;
@@ -159,7 +161,7 @@ function renderHeroSlide(work) {
                 <h3>${PortfolioStorage.escapeHtml(title)}</h3>
                 <p>${PortfolioStorage.escapeHtml(description)}</p>
                 <div class="hero-featured-actions">
-                    ${work._placeholder ? '<span class="hero-featured-hint">Здесь будут твои реальные работы</span>' : '<button type="button" class="hero-featured-open">Смотреть кейс</button>'}
+                    ${work._placeholder ? '<span class="hero-featured-hint">Здесь будут твои реальные работы</span>' : '<span class="hero-featured-hint">Нажмите, чтобы открыть</span>'}
                 </div>
             </div>
         </article>
@@ -181,8 +183,11 @@ function updateHeroSlider() {
     const currentWork = works[currentIndex];
 
     stage.classList.remove('is-ready');
+    stage.dataset.direction = String(portfolioState.heroDirection || 1);
     stage.innerHTML = renderHeroSlide(currentWork);
-    requestAnimationFrame(() => stage.classList.add('is-ready'));
+    requestAnimationFrame(() => {
+        stage.classList.add('is-ready');
+    });
 
     counter.textContent = `${String(currentIndex + 1).padStart(2, '0')} / ${String(works.length).padStart(2, '0')}`;
     dots.innerHTML = works.map((_, idx) => `
@@ -195,19 +200,14 @@ function updateHeroSlider() {
 
     stage.querySelector('[data-hero-work-id]')?.addEventListener('click', () => {
         if (Date.now() < portfolioState.suppressHeroClickUntil) return;
-        if (downloadWorkPdf(currentWork.id)) return;
-        openProjectModal(currentWork.id);
-    });
-    stage.querySelector('.hero-featured-open')?.addEventListener('click', (event) => {
-        event.stopPropagation();
-        if (Date.now() < portfolioState.suppressHeroClickUntil) return;
-        if (downloadWorkPdf(currentWork.id)) return;
         openProjectModal(currentWork.id);
     });
 
     dots.querySelectorAll('[data-hero-slide]').forEach(dot => {
         dot.addEventListener('click', () => {
-            portfolioState.heroCurrentIndex = Number(dot.dataset.heroSlide || 0);
+            const nextIndex = Number(dot.dataset.heroSlide || 0);
+            portfolioState.heroDirection = nextIndex >= portfolioState.heroCurrentIndex ? 1 : -1;
+            portfolioState.heroCurrentIndex = nextIndex;
             updateHeroSlider();
             startHeroAutoplay();
         });
@@ -217,6 +217,7 @@ function updateHeroSlider() {
 function changeHeroSlide(direction = 1) {
     const works = portfolioState.heroWorks || [];
     if (works.length <= 1) return;
+    portfolioState.heroDirection = direction >= 0 ? 1 : -1;
     portfolioState.heroCurrentIndex = (portfolioState.heroCurrentIndex + direction + works.length) % works.length;
     updateHeroSlider();
     startHeroAutoplay();
@@ -387,7 +388,6 @@ function attachWorkCardEvents() {
         card.addEventListener('click', (e) => {
             if (e.target.closest('.work-card-action')) return;
             const id = card.dataset.id;
-            if (downloadWorkPdf(id)) return;
             openProjectModal(id);
         });
     });
@@ -525,10 +525,7 @@ async function renderWorkCard(work) {
                     <h3 class="work-title">${PortfolioStorage.escapeHtml(work.title)}</h3>
                     <p class="work-description">${PortfolioStorage.escapeHtml(work.description || '')}</p>
                     ${fileData ? `<div class="work-file-meta">${PortfolioStorage.escapeHtml(fileData.name)} · ${PortfolioStorage.formatFileSize(fileData.size)}</div>` : ''}
-                    <div class="work-card-actions">
-                        <button type="button" class="work-details-btn">Смотреть кейс</button>
-                        ${href !== '#' ? `<a href="${href}" class="work-link work-card-action" ${target === '_blank' ? 'target="_blank" rel="noopener noreferrer"' : ''} ${isPdf ? `download="${PortfolioStorage.escapeHtml(fileData.name || 'file.pdf')}" data-download-pdf="true" data-file-name="${PortfolioStorage.escapeHtml(fileData.name || 'file.pdf')}"` : ''}>${actionText}</a>` : ''}
-                    </div>
+                    <div class="work-open-cue">Открыть проект</div>
                 </div>
             </div>
         </article>
@@ -851,9 +848,13 @@ function renderMediaLightbox() {
     const next = lightbox.querySelector('.project-media-lightbox-nav.next');
     const dots = lightbox.querySelector('.project-media-lightbox-dots');
 
+    stage.dataset.direction = String(portfolioState.lightboxDirection || 1);
+    stage.classList.remove('is-changing');
+    void stage.offsetWidth;
     stage.innerHTML = current.type === 'video'
         ? `<video src="${current.url}" controls autoplay playsinline></video>`
         : `<img src="${current.url}" alt="${PortfolioStorage.escapeHtml(current.name)}">`;
+    stage.classList.add('is-changing');
     name.textContent = current.name || 'Файл проекта';
     counter.textContent = `${portfolioState.lightboxIndex + 1} / ${items.length}`;
 
@@ -867,7 +868,9 @@ function renderMediaLightbox() {
         `).join('') : '';
         dots.querySelectorAll('[data-lightbox-dot]').forEach(dot => {
             dot.addEventListener('click', () => {
-                portfolioState.lightboxIndex = Number(dot.dataset.lightboxDot || 0);
+                const nextIndex = Number(dot.dataset.lightboxDot || 0);
+                portfolioState.lightboxDirection = nextIndex >= portfolioState.lightboxIndex ? 1 : -1;
+                portfolioState.lightboxIndex = nextIndex;
                 renderMediaLightbox();
             });
         });
@@ -879,6 +882,7 @@ function changeMediaLightbox(direction = 1) {
     if (!lightbox?.classList.contains('active')) return;
     const items = portfolioState.lightboxItems || [];
     if (items.length <= 1) return;
+    portfolioState.lightboxDirection = direction >= 0 ? 1 : -1;
     portfolioState.lightboxIndex = (portfolioState.lightboxIndex + direction + items.length) % items.length;
     renderMediaLightbox();
 }
