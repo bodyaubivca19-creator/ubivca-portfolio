@@ -1,85 +1,94 @@
 const PortfolioAuth = (() => {
-    const STORAGE_KEY = 'portfolio_admin_auth_v1';
-    const SESSION_KEY = 'portfolio_admin_session_v1';
-    const DEFAULT_USERNAME = 'admin';
-    const DEFAULT_PASSWORD = 'ubivca2026';
-
-    async function sha256(text) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(String(text || ''));
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
+    let currentSession = null;
+    let currentUser = null;
 
     async function ensureSetup() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-            try {
-                return JSON.parse(raw);
-            } catch (_) {}
+        const { data, error } = await PortfolioSupabase.auth.getSession();
+        if (error) {
+            console.warn('Supabase session error:', error.message);
+            currentSession = null;
+            currentUser = null;
+            return null;
         }
-        const config = {
-            username: DEFAULT_USERNAME,
-            passwordHash: await sha256(DEFAULT_PASSWORD),
-            updatedAt: Date.now(),
-            defaultPassword: true
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-        return config;
+        currentSession = data?.session || null;
+        currentUser = currentSession?.user || null;
+
+        PortfolioSupabase.auth.onAuthStateChange((_event, session) => {
+            currentSession = session || null;
+            currentUser = session?.user || null;
+        });
+
+        return currentSession;
     }
 
     function getSession() {
-        const raw = sessionStorage.getItem(SESSION_KEY);
-        if (!raw) return null;
-        try {
-            return JSON.parse(raw);
-        } catch (_) {
-            return null;
-        }
+        return currentSession;
     }
 
     function isAuthenticated() {
-        const session = getSession();
-        return Boolean(session && session.username);
+        return Boolean(currentSession?.user);
     }
 
     async function login(username, password) {
-        const config = await ensureSetup();
-        const passwordHash = await sha256(password);
-        const valid = username === config.username && passwordHash === config.passwordHash;
-        if (!valid) return { ok: false, message: 'Неверный логин или пароль.' };
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: config.username, loginAt: Date.now() }));
-        return { ok: true, defaultPassword: Boolean(config.defaultPassword) };
+        const email = String(username || '').trim();
+        if (!email || !password) {
+            return { ok: false, message: 'Введите email и пароль.' };
+        }
+
+        const { data, error } = await PortfolioSupabase.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        if (error) {
+            return { ok: false, message: 'Неверный email или пароль.' };
+        }
+
+        currentSession = data?.session || null;
+        currentUser = data?.user || currentSession?.user || null;
+        return { ok: true, defaultPassword: false };
     }
 
-    function logout() {
-        sessionStorage.removeItem(SESSION_KEY);
+    async function logout() {
+        await PortfolioSupabase.auth.signOut();
+        currentSession = null;
+        currentUser = null;
     }
 
     async function changePassword(currentPassword, newPassword) {
-        const config = await ensureSetup();
-        const currentHash = await sha256(currentPassword);
-        if (currentHash !== config.passwordHash) {
-            return { ok: false, message: 'Текущий пароль введён неверно.' };
+        const email = currentUser?.email;
+        if (!email) {
+            return { ok: false, message: 'Сначала войдите в админку.' };
         }
         if (!newPassword || String(newPassword).trim().length < 6) {
             return { ok: false, message: 'Новый пароль должен быть не короче 6 символов.' };
         }
-        const updated = {
-            ...config,
-            passwordHash: await sha256(newPassword.trim()),
-            updatedAt: Date.now(),
-            defaultPassword: false
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+        const check = await PortfolioSupabase.auth.signInWithPassword({
+            email,
+            password: currentPassword
+        });
+
+        if (check.error) {
+            return { ok: false, message: 'Текущий пароль введён неверно.' };
+        }
+
+        const { error } = await PortfolioSupabase.auth.updateUser({
+            password: String(newPassword).trim()
+        });
+
+        if (error) {
+            return { ok: false, message: error.message || 'Не удалось сменить пароль.' };
+        }
+
         return { ok: true };
     }
 
     async function getPublicMeta() {
-        const config = await ensureSetup();
+        if (!currentUser) await ensureSetup();
         return {
-            username: config.username,
-            defaultPassword: Boolean(config.defaultPassword)
+            username: currentUser?.email || 'Supabase admin',
+            defaultPassword: false
         };
     }
 

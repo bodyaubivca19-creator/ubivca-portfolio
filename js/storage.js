@@ -1,78 +1,22 @@
-
 const PortfolioStorage = (() => {
-    const DB_NAME = 'portfolioWorksDB';
-    const STORE_NAME = 'works';
-    const DB_VERSION = 1;
-
-    function openDb() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-            request.onupgradeneeded = () => {
-                const db = request.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                    store.createIndex('createdAt', 'createdAt', { unique: false });
-                }
-            };
-
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async function withStore(mode, callback) {
-        const db = await openDb();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, mode);
-            const store = tx.objectStore(STORE_NAME);
-            const result = callback(store, resolve, reject);
-
-            tx.oncomplete = () => db.close();
-            tx.onerror = () => reject(tx.error);
-            tx.onabort = () => reject(tx.error || new Error('Транзакция прервана'));
-
-            return result;
-        });
-    }
-
-    async function getAllWorks() {
-        return withStore('readonly', (store, resolve, reject) => {
-            const request = store.getAll();
-            request.onsuccess = () => {
-                const items = (request.result || []).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                resolve(items);
-            };
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async function saveWork(work) {
-        return withStore('readwrite', (store, resolve, reject) => {
-            const request = store.put(work);
-            request.onsuccess = () => resolve(work);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async function deleteWork(id) {
-        return withStore('readwrite', (store, resolve, reject) => {
-            const request = store.delete(id);
-            request.onsuccess = () => resolve(true);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async function getWork(id) {
-        return withStore('readonly', (store, resolve, reject) => {
-            const request = store.get(id);
-            request.onsuccess = () => resolve(request.result || null);
-            request.onerror = () => reject(request.error);
-        });
-    }
+    const WORKS_TABLE = 'works';
+    const FILES_BUCKET = 'portfolio-files';
 
     function createId() {
-        return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        if (crypto?.randomUUID) return crypto.randomUUID();
+        return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    }
+
+    function safePathPart(value = '') {
+        return String(value || 'file')
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-zA-Z0-9._-]+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+            .slice(0, 120) || 'file';
     }
 
     function getMimeCategory(mime = '', fileName = '') {
@@ -112,8 +56,11 @@ const PortfolioStorage = (() => {
     }
 
     function createObjectUrl(fileData) {
-        if (!fileData || !fileData.blob) return '';
-        return URL.createObjectURL(fileData.blob);
+        if (!fileData) return '';
+        if (fileData.url) return fileData.url;
+        if (fileData.publicUrl) return fileData.publicUrl;
+        if (fileData.blob) return URL.createObjectURL(fileData.blob);
+        return '';
     }
 
     function isRenderable3D(fileData) {
@@ -153,6 +100,170 @@ const PortfolioStorage = (() => {
             crm: 'Система учёта'
         };
         return labels[category] || category || 'Без категории';
+    }
+
+    async function uploadFile(fileData, workId, folder = 'main') {
+        if (!fileData?.blob) return fileData || null;
+        const file = fileData.blob;
+        const path = `works/${workId}/${folder}/${Date.now()}-${safePathPart(file.name || fileData.name)}`;
+
+        const { error } = await PortfolioSupabase.storage
+            .from(FILES_BUCKET)
+            .upload(path, file, {
+                cacheControl: '3600',
+                upsert: true,
+                contentType: file.type || fileData.type || undefined
+            });
+
+        if (error) throw error;
+
+        const { data } = PortfolioSupabase.storage.from(FILES_BUCKET).getPublicUrl(path);
+        return {
+            name: file.name || fileData.name || 'file',
+            type: file.type || fileData.type || '',
+            size: file.size || fileData.size || 0,
+            lastModified: file.lastModified || fileData.lastModified || Date.now(),
+            path,
+            url: data.publicUrl
+        };
+    }
+
+    function fromRow(row) {
+        const meta = row.meta || {};
+        const fileData = row.file_url ? {
+            name: row.file_name || meta.fileData?.name || row.title || 'file',
+            type: row.file_type || meta.fileData?.type || '',
+            size: row.file_size || meta.fileData?.size || 0,
+            lastModified: meta.fileData?.lastModified || Date.now(),
+            path: meta.fileData?.path || '',
+            url: row.file_url
+        } : (meta.fileData || null);
+
+        return {
+            id: row.id,
+            title: row.title || '',
+            category: row.category || 'other',
+            description: row.description || '',
+            detailedDescription: meta.detailedDescription || row.description || '',
+            tags: meta.tags || [],
+            link: row.link || '',
+            demoUrl: meta.demoUrl || '',
+            repository: meta.repository || '',
+            caseUrl: meta.caseUrl || '',
+            videoUrl: meta.videoUrl || '',
+            extraUrl: meta.extraUrl || '',
+            projectType: row.project_type || meta.projectType || categoryLabel(row.category),
+            client: row.client || '',
+            role: row.role || '',
+            projectYear: meta.projectYear || row.work_date || '',
+            featured: Boolean(meta.featured),
+            new: Boolean(meta.new),
+            date: row.work_date || meta.date || '',
+            createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+            updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
+            fileData,
+            imageUrl: row.image_url || fileData?.url || '',
+            gallery: Array.isArray(row.gallery) ? row.gallery : []
+        };
+    }
+
+    async function toRow(work) {
+        const id = work.id || createId();
+        const uploadedMain = await uploadFile(work.fileData, id, 'main');
+        const uploadedGallery = [];
+
+        for (const item of work.gallery || []) {
+            uploadedGallery.push(item?.blob ? await uploadFile(item, id, 'gallery') : item);
+        }
+
+        const mainUrl = uploadedMain?.url || '';
+        const mainType = uploadedMain ? getMimeCategory(uploadedMain.type, uploadedMain.name) : '';
+
+        return {
+            id,
+            title: work.title,
+            description: work.description || '',
+            category: work.category || 'other',
+            project_type: work.projectType || categoryLabel(work.category),
+            client: work.client || '',
+            role: work.role || '',
+            work_date: work.date || work.projectYear || '',
+            link: work.link || '',
+            image_url: mainType === 'image' ? mainUrl : (work.imageUrl || ''),
+            file_url: mainUrl,
+            file_name: uploadedMain?.name || '',
+            file_type: uploadedMain?.type || '',
+            file_size: uploadedMain?.size || 0,
+            gallery: uploadedGallery,
+            is_published: work.isPublished !== false,
+            sort_order: Number(work.sortOrder || 0),
+            updated_at: new Date().toISOString(),
+            meta: {
+                detailedDescription: work.detailedDescription || work.description || '',
+                tags: work.tags || [],
+                demoUrl: work.demoUrl || '',
+                repository: work.repository || '',
+                caseUrl: work.caseUrl || '',
+                videoUrl: work.videoUrl || '',
+                extraUrl: work.extraUrl || '',
+                projectYear: work.projectYear || '',
+                featured: Boolean(work.featured),
+                new: Boolean(work.new),
+                date: work.date || '',
+                fileData: uploadedMain
+            }
+        };
+    }
+
+    async function getAllWorks() {
+        const { data, error } = await PortfolioSupabase
+            .from(WORKS_TABLE)
+            .select('*')
+            .order('sort_order', { ascending: true })
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return (data || []).map(fromRow);
+    }
+
+    async function getWork(id) {
+        const { data, error } = await PortfolioSupabase
+            .from(WORKS_TABLE)
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data ? fromRow(data) : null;
+    }
+
+    async function saveWork(work) {
+        const row = await toRow(work);
+        const { data, error } = await PortfolioSupabase
+            .from(WORKS_TABLE)
+            .upsert(row, { onConflict: 'id' })
+            .select('*')
+            .single();
+
+        if (error) throw error;
+        return fromRow(data);
+    }
+
+    async function deleteWork(id) {
+        const existing = await getWork(id);
+        const paths = [];
+        if (existing?.fileData?.path) paths.push(existing.fileData.path);
+        for (const item of existing?.gallery || []) {
+            if (item?.path) paths.push(item.path);
+        }
+
+        const { error } = await PortfolioSupabase.from(WORKS_TABLE).delete().eq('id', id);
+        if (error) throw error;
+
+        if (paths.length) {
+            await PortfolioSupabase.storage.from(FILES_BUCKET).remove(paths);
+        }
+        return true;
     }
 
     function previewMarkup(work, objectUrl = '') {
