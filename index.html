@@ -3,180 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UBIVCA | Дизайн, веб-разработка и цифровые продукты</title>
-    <meta name="description" content="Портфолио дизайнера и разработчика: 2D/3D-графика, сайты, Telegram-боты, приложения, системы учёта и автоматизация для бизнеса.">
-    <meta name="keywords" content="портфолио, дизайн, веб-разработка, сайты, telegram bot, автоматизация, система учета, 3D, 2D, UI UX">
-    <meta property="og:title" content="UBIVCA | Дизайн и разработка цифровых продуктов">
-    <meta property="og:description" content="Визуалы, сайты, боты, приложения и внутренние системы для бизнеса.">
+    <title>UBIVCA | Digital portfolio</title>
+    <meta name="description" content="UBIVCA — портфолио цифровых работ: дизайн, сайты, Telegram-боты, приложения и автоматизация.">
+    <meta name="keywords" content="UBIVCA, портфолио, дизайн, сайты, веб-разработка, telegram bot, автоматизация, UI UX, 3D, 2D">
+    <meta property="og:title" content="UBIVCA | Digital portfolio">
+    <meta property="og:description" content="Дизайн, код и системы. Портфолио цифровых работ.">
     <meta property="og:type" content="website">
+    <meta name="theme-color" content="#050505">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/animations.css">
 </head>
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
-    <div class="gradient-bg"></div>
-    <div class="noise"></div>
-    <div class="particles" id="particles"></div>
+    <div class="site-bg" aria-hidden="true">
+        <div class="orb orb-red"></div>
+        <div class="orb orb-white"></div>
+        <div class="noise"></div>
+    </div>
 
-    <div class="container">
-        <nav>
-            <a class="logo" href="#hero" aria-label="На главную">UBIVCA</a>
-            <div class="nav-links">
-                <a href="#projects">Проекты</a>
-                <a href="#contact">Контакты</a>
-            </div>
+    <header class="site-header" id="top">
+        <a class="logo" href="#top" aria-label="UBIVCA — главная">UBIVCA</a>
+        <nav class="nav-links" aria-label="Главная навигация">
+            <a href="#projects">Проекты</a>
+            <a href="#contact">Контакты</a>
         </nav>
+        <a class="nav-cta" href="#contact">Start</a>
+    </header>
 
-        <section class="hero hero-updated" id="hero">
-            <div class="hero-content">
-                <div class="eyebrow">Digital portfolio</div>
-                <h1 class="hero-title hero-title-updated">
-                    <span>DESIGN</span>
-                    <span>CODE</span>
-                    <span>SYSTEMS</span>
+    <main>
+        <section class="hero" id="hero">
+            <div class="hero-copy reveal">
+                <span class="eyebrow">Digital portfolio</span>
+                <h1>
+                    <span>Design.</span>
+                    <span>Code.</span>
+                    <span>Systems.</span>
                 </h1>
-                <p class="hero-subtitle hero-subtitle-wide">
-                    Создаю визуал и цифровые инструменты: от 2D/3D-дизайна до сайтов, Telegram-ботов, приложений и систем учёта для бизнеса.
-                </p>
+                <p>Визуал, сайты, боты, приложения и рабочие digital-инструменты. Без лишнего шума — только точная подача и сильный результат.</p>
                 <div class="hero-actions">
-                    <a href="#projects" class="hero-btn primary">Смотреть проекты</a>
-                    <a href="#contact" class="hero-btn secondary">Связаться</a>
+                    <a class="btn primary" href="#projects">Смотреть работы</a>
+                    <a class="btn ghost" href="#contact">Связаться</a>
                 </div>
-                <div class="hero-tags">
-                    <span>3D / 2D</span>
+                <div class="hero-tags" aria-label="Направления">
+                    <span>2D / 3D</span>
                     <span>Web</span>
-                    <span>Telegram bots</span>
+                    <span>Bots</span>
                     <span>Automation</span>
                 </div>
             </div>
 
-            <div class="hero-showcase" id="heroShowcase" aria-label="Избранные проекты">
-                <div class="hero-showcase-glow"></div>
-
+            <aside class="hero-showcase reveal" aria-label="Избранные проекты">
+                <div class="showcase-topline">
+                    <span>Selected work</span>
+                    <span id="heroSliderCounter">01 / 01</span>
+                </div>
                 <div class="hero-slider-shell">
                     <button class="hero-slider-nav prev" id="heroPrev" type="button" aria-label="Предыдущий проект">‹</button>
                     <div class="hero-slider-stage" id="heroSliderStage"></div>
                     <button class="hero-slider-nav next" id="heroNext" type="button" aria-label="Следующий проект">›</button>
                 </div>
-
-                <div class="hero-slider-timeline" aria-hidden="true">
-                    <div class="hero-slider-timeline-bar" id="heroSliderTimelineBar"></div>
-                </div>
-
-                <div class="hero-slider-footer">
-                    <div class="hero-slider-counter" id="heroSliderCounter">01 / 01</div>
-                    <div class="hero-slider-dots" id="heroSliderDots"></div>
-                </div>
-            </div>
+                <div class="hero-slider-timeline" aria-hidden="true"><div id="heroSliderTimelineBar"></div></div>
+                <div class="hero-slider-dots" id="heroSliderDots"></div>
+            </aside>
         </section>
 
         <section class="projects-section" id="projects">
-            <div class="section-header stacked compact-heading">
-                <span class="section-kicker">Проекты</span>
-                <h2 class="section-title">Портфолио по категориям</h2>
-                <p class="section-note">Реальные работы собраны по выбранным категориям. Разделы без проектов автоматически скрываются.</p>
+            <div class="section-head reveal">
+                <span class="section-kicker">Работы</span>
+                <h2>Портфолио по категориям</h2>
+                <p>Каждый раздел показывает до трёх проектов. Если работ больше — появляется аккуратное раскрытие.</p>
             </div>
 
-            <div class="project-category-section" id="design-projects" data-project-section="design">
+            <div class="project-category-section reveal" data-project-section="design">
                 <div class="project-category-heading">
-                    <div>
-                        <span>01 / Design</span>
-                        <h3>Дизайн</h3>
-                    </div>
-                    <p>2D, 3D, визуалы, карточки, баннеры, векторная и растровая графика.</p>
+                    <span>01 / Design</span>
+                    <h3>Дизайн</h3>
+                    <p>2D, 3D, графика, визуалы, карточки, баннеры и подача.</p>
                 </div>
-                <div class="works-grid category-works-grid" data-project-grid="design"></div>
+                <div class="works-grid" data-project-grid="design"></div>
             </div>
 
-            <div class="project-category-section" id="development-projects" data-project-section="development">
+            <div class="project-category-section reveal" data-project-section="websites">
                 <div class="project-category-heading">
-                    <div>
-                        <span>02 / Development</span>
-                        <h3>Разработка</h3>
-                    </div>
-                    <p>Интерфейсы, логика, внутренние инструменты, админ-панели и технические модули.</p>
+                    <span>02 / Websites</span>
+                    <h3>Сайты</h3>
+                    <p>Лендинги, промо, корпоративные страницы и адаптивная верстка.</p>
                 </div>
-                <div class="works-grid category-works-grid" data-project-grid="development"></div>
+                <div class="works-grid" data-project-grid="websites"></div>
             </div>
 
-            <div class="project-category-section" id="websites-projects" data-project-section="websites">
+            <div class="project-category-section reveal" data-project-section="development">
                 <div class="project-category-heading">
-                    <div>
-                        <span>03 / Websites</span>
-                        <h3>Сайты</h3>
-                    </div>
-                    <p>Лендинги, промо-страницы, корпоративные сайты, адаптивная верстка и SEO-основа.</p>
+                    <span>03 / Development</span>
+                    <h3>Разработка</h3>
+                    <p>Интерфейсы, логика, модули, панели и внутренние инструменты.</p>
                 </div>
-                <div class="works-grid category-works-grid" data-project-grid="websites"></div>
+                <div class="works-grid" data-project-grid="development"></div>
             </div>
 
-            <div class="project-category-section" id="bots-projects" data-project-section="bots">
+            <div class="project-category-section reveal" data-project-section="bots">
                 <div class="project-category-heading">
-                    <div>
-                        <span>04 / Telegram bots</span>
-                        <h3>Telegram-боты</h3>
-                    </div>
-                    <p>Боты для заявок, уведомлений, сценариев, кнопок, интеграций и автоматической обработки данных.</p>
+                    <span>04 / Telegram bots</span>
+                    <h3>Telegram-боты</h3>
+                    <p>Сценарии, заявки, уведомления, кнопки, интеграции и API.</p>
                 </div>
-                <div class="works-grid category-works-grid" data-project-grid="bots"></div>
+                <div class="works-grid" data-project-grid="bots"></div>
             </div>
 
-            <div class="project-category-section" id="apps-projects" data-project-section="apps">
+            <div class="project-category-section reveal" data-project-section="apps">
                 <div class="project-category-heading">
-                    <div>
-                        <span>05 / Apps</span>
-                        <h3>Приложения</h3>
-                    </div>
-                    <p>Мини-сервисы, веб-приложения, пользовательские кабинеты, прототипы и прикладные инструменты.</p>
+                    <span>05 / Apps</span>
+                    <h3>Приложения</h3>
+                    <p>Мини-сервисы, кабинеты, прототипы и прикладные решения.</p>
                 </div>
-                <div class="works-grid category-works-grid" data-project-grid="apps"></div>
+                <div class="works-grid" data-project-grid="apps"></div>
             </div>
 
-            <div class="project-category-section" id="automation-projects" data-project-section="automation">
+            <div class="project-category-section reveal" data-project-section="automation">
                 <div class="project-category-heading">
-                    <div>
-                        <span>06 / Automation</span>
-                        <h3>Автоматизация</h3>
-                    </div>
-                    <p>Системы учёта, панели управления, рабочие процессы, выгрузки, кабинеты и производственные решения.</p>
+                    <span>06 / Automation</span>
+                    <h3>Автоматизация</h3>
+                    <p>Системы учёта, рабочие процессы, выгрузки и диспетчерские.</p>
                 </div>
-                <div class="works-grid category-works-grid" data-project-grid="automation"></div>
+                <div class="works-grid" data-project-grid="automation"></div>
             </div>
 
-            <div class="project-category-section" id="other-projects" data-project-section="other">
+            <div class="project-category-section reveal" data-project-section="other">
                 <div class="project-category-heading">
-                    <div>
-                        <span>07 / Other</span>
-                        <h3>Прочее</h3>
-                    </div>
-                    <p>Эксперименты, концепты, отдельные файлы, прототипы и нестандартные задачи.</p>
+                    <span>07 / Other</span>
+                    <h3>Прочее</h3>
+                    <p>Эксперименты, файлы, концепты и нестандартные задачи.</p>
                 </div>
-                <div class="works-grid category-works-grid" data-project-grid="other"></div>
+                <div class="works-grid" data-project-grid="other"></div>
             </div>
         </section>
 
-        <section class="tracker-section contact-section" id="contact">
-            <div class="mouse-tracker-container">
-                <div id="mouseTracker" class="mouse-tracker">
-                    <span class="tracker-text">+7 777 010 49 12</span>
-                </div>
-            </div>
-            <div class="contact-copy">
+        <section class="contact-section reveal" id="contact">
+            <div>
                 <span class="section-kicker">Контакты</span>
-                <h2>Связь по проектам и сотрудничеству</h2>
-                <p>Открыт к проектам в дизайне, веб-разработке, автоматизации и создании digital-инструментов для бизнеса.</p>
+                <h2>Есть задача — покажи, что нужно собрать.</h2>
+                <p>Дизайн, сайт, бот, приложение или система под бизнес-процесс.</p>
             </div>
+            <a class="contact-phone" href="tel:+77770104912">+7 777 010 49 12</a>
         </section>
+    </main>
 
-        <footer>
-            <p>UBIVCA — digital portfolio</p>
-            <p class="footer-heart">Design × Code × Systems</p>
-        </footer>
-    </div>
+    <footer class="site-footer">
+        <span>UBIVCA</span>
+        <span>Design × Code × Systems</span>
+    </footer>
 
-    <div class="project-modal" id="projectModal">
-        <div class="project-modal-dialog">
-            <button class="project-modal-close" id="projectModalClose" aria-label="Закрыть">×</button>
+    <div class="project-modal" id="projectModal" aria-hidden="true">
+        <div class="project-modal-dialog" role="dialog" aria-modal="true" aria-label="Проект">
+            <button class="project-modal-close" id="projectModalClose" type="button" aria-label="Закрыть">×</button>
             <div class="project-modal-body" id="projectModalBody"></div>
         </div>
     </div>
