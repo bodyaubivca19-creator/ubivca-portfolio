@@ -37,13 +37,13 @@ const fallbackWorks = [
 ];
 
 function escapeHtml(value = '') {
-    if (window.PortfolioStorage?.escapeHtml) return PortfolioStorage.escapeHtml(value);
+    if (typeof PortfolioStorage !== 'undefined' && PortfolioStorage?.escapeHtml) return PortfolioStorage.escapeHtml(value);
     return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\'': '&#039;', '"': '&quot;' }[char]));
 }
 
 function getMimeCategory(fileData) {
     if (!fileData) return 'file';
-    if (window.PortfolioStorage?.getMimeCategory) return PortfolioStorage.getMimeCategory(fileData.type, fileData.name);
+    if (typeof PortfolioStorage !== 'undefined' && PortfolioStorage?.getMimeCategory) return PortfolioStorage.getMimeCategory(fileData.type, fileData.name);
     const type = String(fileData.type || '').toLowerCase();
     const name = String(fileData.name || '').toLowerCase();
     if (type.startsWith('image/')) return 'image';
@@ -54,7 +54,7 @@ function getMimeCategory(fileData) {
 }
 
 function formatFileSize(bytes = 0) {
-    return window.PortfolioStorage?.formatFileSize ? PortfolioStorage.formatFileSize(bytes) : `${Math.round((bytes || 0) / 1024)} КБ`;
+    return (typeof PortfolioStorage !== 'undefined' && PortfolioStorage?.formatFileSize) ? PortfolioStorage.formatFileSize(bytes) : `${Math.round((bytes || 0) / 1024)} КБ`;
 }
 
 function categoryKey(value = '') {
@@ -84,7 +84,7 @@ function rememberObjectUrl(url) {
 
 function getObjectUrl(fileData) {
     if (!fileData) return '';
-    return rememberObjectUrl(window.PortfolioStorage?.createObjectUrl ? PortfolioStorage.createObjectUrl(fileData) : (fileData.url || fileData.publicUrl || ''));
+    return rememberObjectUrl((typeof PortfolioStorage !== 'undefined' && PortfolioStorage?.createObjectUrl) ? PortfolioStorage.createObjectUrl(fileData) : (fileData.url || fileData.publicUrl || ''));
 }
 
 function renderMedia(work, className = 'work-image') {
@@ -98,7 +98,7 @@ function renderMedia(work, className = 'work-image') {
     }
     if (fileData && type === 'image' && url) return `<img src="${escapeHtml(url)}" alt="${safeTitle}" class="${className}">`;
     if (fileData && type === 'video' && url) return `<video src="${escapeHtml(url)}" class="${className}" muted playsinline preload="metadata"></video>`;
-    if (fileData && type === '3d' && url && window.PortfolioStorage?.render3DViewerMarkup && PortfolioStorage.isRenderable3D(fileData)) {
+    if (fileData && type === '3d' && url && typeof PortfolioStorage !== 'undefined' && PortfolioStorage?.render3DViewerMarkup && PortfolioStorage.isRenderable3D(fileData)) {
         return PortfolioStorage.render3DViewerMarkup(fileData, url, className === 'work-image' ? 'work-model-viewer' : 'project-model-viewer');
     }
     if (fileData && type === 'pdf') {
@@ -110,8 +110,8 @@ function renderMedia(work, className = 'work-image') {
 
 async function safeLoadWorks() {
     try {
-        if (window.PortfolioAuth?.ensureSetup) await PortfolioAuth.ensureSetup();
-        if (window.PortfolioStorage?.getAllWorks) {
+        if (typeof PortfolioAuth !== 'undefined' && PortfolioAuth?.ensureSetup) await PortfolioAuth.ensureSetup();
+        if (typeof PortfolioStorage !== 'undefined' && PortfolioStorage?.getAllWorks) {
             const works = await PortfolioStorage.getAllWorks();
             return Array.isArray(works) ? works : [];
         }
@@ -423,7 +423,7 @@ function renderProjectMain(work, mainUrl) {
     if (fileData && type === 'image' && mainUrl) return `<button type="button" class="project-main-media-button" data-gallery-lightbox="true" data-file-url="${escapeHtml(mainUrl)}" data-lightbox-type="image" data-lightbox-name="${escapeHtml(fileData.name || work.title)}"><img src="${escapeHtml(mainUrl)}" alt="${safeTitle}" class="project-main-image"><span class="project-main-open-hint">Открыть полностью</span></button>`;
     if (fileData && type === 'video' && mainUrl) return `<button type="button" class="project-main-media-button" data-gallery-lightbox="true" data-file-url="${escapeHtml(mainUrl)}" data-lightbox-type="video" data-lightbox-name="${escapeHtml(fileData.name || work.title)}"><video src="${escapeHtml(mainUrl)}" class="project-main-video" controls playsinline></video></button>`;
     if (fileData && type === 'pdf' && mainUrl) return `<div class="project-pdf-download"><div class="project-pdf-download-icon">PDF</div><h3>${escapeHtml(fileData.name || work.title)}</h3><p>${formatFileSize(fileData.size || 0)} · файл скачивается напрямую</p><a href="${escapeHtml(mainUrl)}" download="${escapeHtml(fileData.name || 'file.pdf')}">Скачать PDF</a></div>`;
-    if (fileData && type === '3d' && mainUrl && window.PortfolioStorage?.render3DViewerMarkup && PortfolioStorage.isRenderable3D(fileData)) return PortfolioStorage.render3DViewerMarkup(fileData, mainUrl, 'project-model-viewer');
+    if (fileData && type === '3d' && mainUrl && typeof PortfolioStorage !== 'undefined' && PortfolioStorage?.render3DViewerMarkup && PortfolioStorage.isRenderable3D(fileData)) return PortfolioStorage.render3DViewerMarkup(fileData, mainUrl, 'project-model-viewer');
     if (!fileData && mainUrl) return `<button type="button" class="project-main-media-button" data-gallery-lightbox="true" data-file-url="${escapeHtml(mainUrl)}" data-lightbox-type="image" data-lightbox-name="${safeTitle}"><img src="${escapeHtml(mainUrl)}" alt="${safeTitle}" class="project-main-image"><span class="project-main-open-hint">Открыть полностью</span></button>`;
     return renderMedia(work, 'project-main-image');
 }

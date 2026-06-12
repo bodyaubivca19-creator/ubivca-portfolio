@@ -110,3 +110,7 @@ const PortfolioAuth = (() => {
         getSession
     };
 })();
+
+if (typeof window !== 'undefined') {
+    window.PortfolioAuth = PortfolioAuth;
+}

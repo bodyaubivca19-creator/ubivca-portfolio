@@ -327,3 +327,7 @@ const PortfolioStorage = (() => {
         render3DViewerMarkup
     };
 })();
+
+if (typeof window !== 'undefined') {
+    window.PortfolioStorage = PortfolioStorage;
+}

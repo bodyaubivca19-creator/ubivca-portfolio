@@ -8,3 +8,7 @@ const PortfolioSupabase = window.supabase
 if (!PortfolioSupabase) {
     console.warn('Supabase SDK не загрузился. Портфолио откроется без данных из базы.');
 }
+
+if (typeof window !== 'undefined') {
+    window.PortfolioSupabase = PortfolioSupabase;
+}
