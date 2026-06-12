@@ -7,10 +7,50 @@ const portfolioState = {
     heroCurrentIndex: 0,
     heroAutoplay: null,
     lightboxItems: [],
-    lightboxIndex: 0
+    lightboxIndex: 0,
+    heroTouchStartX: 0,
+    heroTouchStartY: 0,
+    suppressHeroClickUntil: 0
 };
 
 const HERO_SLIDE_DURATION = 5000;
+
+function bindHorizontalSwipe(element, onLeft, onRight, options = {}) {
+    if (!element || element.dataset.swipeBound === 'true') return;
+    element.dataset.swipeBound = 'true';
+
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+
+    element.addEventListener('touchstart', (event) => {
+        const touch = event.touches?.[0];
+        if (!touch) return;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        tracking = true;
+    }, { passive: true });
+
+    element.addEventListener('touchend', (event) => {
+        if (!tracking) return;
+        tracking = false;
+        const touch = event.changedTouches?.[0];
+        if (!touch) return;
+
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+        const threshold = Number(options.threshold || 46);
+
+        if (Math.abs(dx) < threshold || Math.abs(dx) < Math.abs(dy) * 1.25) return;
+        if (options.preventGhostClick) {
+            portfolioState.suppressHeroClickUntil = Date.now() + 450;
+        }
+
+        if (dx < 0) onLeft?.();
+        else onRight?.();
+    }, { passive: true });
+}
+
 
 const PROJECT_CATEGORIES = [
     { key: 'design', empty: 'Сюда будут добавлены дизайн-проекты: 2D, 3D, визуалы и графика.' },
@@ -154,11 +194,13 @@ function updateHeroSlider() {
     nextBtn?.toggleAttribute('disabled', shouldDisableNav);
 
     stage.querySelector('[data-hero-work-id]')?.addEventListener('click', () => {
+        if (Date.now() < portfolioState.suppressHeroClickUntil) return;
         if (downloadWorkPdf(currentWork.id)) return;
         openProjectModal(currentWork.id);
     });
     stage.querySelector('.hero-featured-open')?.addEventListener('click', (event) => {
         event.stopPropagation();
+        if (Date.now() < portfolioState.suppressHeroClickUntil) return;
         if (downloadWorkPdf(currentWork.id)) return;
         openProjectModal(currentWork.id);
     });
@@ -205,6 +247,13 @@ function initHeroSliderControls() {
         nextBtn.dataset.bound = 'true';
         nextBtn.addEventListener('click', () => changeHeroSlide(1));
     }
+
+    bindHorizontalSwipe(
+        document.getElementById('heroShowcase'),
+        () => changeHeroSlide(1),
+        () => changeHeroSlide(-1),
+        { preventGhostClick: true, threshold: 42 }
+    );
 }
 
 function startHeroAutoplay() {
@@ -502,7 +551,8 @@ function openProjectModal(id) {
     });
 
     content.querySelectorAll('[data-gallery-lightbox]').forEach(item => {
-        item.addEventListener('click', () => {
+        item.addEventListener('click', (event) => {
+            event.preventDefault();
             const index = Array.from(content.querySelectorAll('[data-gallery-lightbox]')).indexOf(item);
             openMediaLightbox(content, Math.max(0, index));
         });
@@ -522,6 +572,7 @@ function buildProjectModalMarkup(work) {
     const category = getPublicCategoryLabel(work);
     const tags = Array.isArray(work.tags) ? work.tags.filter(Boolean) : [];
     const gallery = Array.isArray(work.gallery) ? work.gallery : [];
+    const lightboxMediaCount = getProjectLightboxMediaCount(work);
     const paragraphs = splitTextToParagraphs(work.detailedDescription || work.description || '');
     const related = getRelatedWorks(work);
     const relatedLinks = [
@@ -536,7 +587,7 @@ function buildProjectModalMarkup(work) {
         <div class="project-detail">
             <div class="project-hero">
                 <div class="project-hero-media">
-                    ${renderProjectMainMedia(work, mainUrl)}
+                    ${renderProjectMainMedia(work, mainUrl, lightboxMediaCount)}
                 </div>
                 <div class="project-hero-info">
                     <span class="project-type-badge">${PortfolioStorage.escapeHtml(category)}</span>
@@ -592,23 +643,76 @@ function buildProjectModalMarkup(work) {
     `;
 }
 
-function renderProjectMainMedia(work, mainUrl) {
+function getProjectLightboxMediaCount(work) {
+    let count = 0;
+    const fileData = work?.fileData || null;
+    if (fileData) {
+        const mainType = PortfolioStorage.getMimeCategory(fileData.type, fileData.name);
+        if (mainType === 'image' || mainType === 'video') count += 1;
+    } else if (work?.imageUrl) {
+        count += 1;
+    }
+
+    const gallery = Array.isArray(work?.gallery) ? work.gallery : [];
+    gallery.forEach(item => {
+        const type = PortfolioStorage.getMimeCategory(item.type, item.name);
+        if (type === 'image' || type === 'video') count += 1;
+    });
+
+    return count;
+}
+
+function renderProjectMediaDots(count) {
+    if (count <= 1) return '';
+    return `
+        <div class="project-media-dots" aria-label="В проекте ${count} медиафайла">
+            ${Array.from({ length: count }).map((_, index) => `<span class="project-media-dot ${index === 0 ? 'active' : ''}"></span>`).join('')}
+        </div>
+    `;
+}
+
+function renderProjectMainMedia(work, mainUrl, lightboxMediaCount = 0) {
     const fileData = work.fileData || null;
-    const fallbackImage = work.imageUrl ? `<img src="${PortfolioStorage.escapeHtml(work.imageUrl)}" alt="${PortfolioStorage.escapeHtml(work.title)}" class="project-main-image">` : '';
+    const safeTitle = PortfolioStorage.escapeHtml(work.title || 'Project');
+    const dots = renderProjectMediaDots(lightboxMediaCount);
+    const openHint = lightboxMediaCount > 1 ? '<span class="project-main-open-hint">Нажмите, чтобы открыть галерею</span>' : '';
+
+    if (!fileData && work.imageUrl) {
+        const url = PortfolioStorage.escapeHtml(work.imageUrl);
+        return `
+            <button type="button" class="project-main-media-button" data-file-url="${url}" data-gallery-lightbox="true" data-lightbox-type="image" data-lightbox-name="${safeTitle}">
+                <img src="${url}" alt="${safeTitle}" class="project-main-image">
+                ${openHint}
+                ${dots}
+            </button>
+        `;
+    }
 
     if (fileData) {
         const type = PortfolioStorage.getMimeCategory(fileData.type, fileData.name);
+        const safeName = PortfolioStorage.escapeHtml(fileData.name || work.title || 'Файл проекта');
         if (type === 'image' && mainUrl) {
-            return `<img src="${mainUrl}" alt="${PortfolioStorage.escapeHtml(work.title)}" class="project-main-image">`;
+            return `
+                <button type="button" class="project-main-media-button" data-file-url="${mainUrl}" data-gallery-lightbox="true" data-lightbox-type="image" data-lightbox-name="${safeName}">
+                    <img src="${mainUrl}" alt="${safeTitle}" class="project-main-image">
+                    ${openHint}
+                    ${dots}
+                </button>
+            `;
         }
         if (type === 'video' && mainUrl) {
-            return `<video src="${mainUrl}" class="project-main-video" controls playsinline></video>`;
+            return `
+                <button type="button" class="project-main-media-button" data-file-url="${mainUrl}" data-gallery-lightbox="true" data-lightbox-type="video" data-lightbox-name="${safeName}">
+                    <video src="${mainUrl}" class="project-main-video" controls playsinline></video>
+                    ${openHint}
+                    ${dots}
+                </button>
+            `;
         }
         if (type === '3d' && mainUrl && PortfolioStorage.isRenderable3D(fileData)) {
             return `<div class="project-main-file project-main-3d">${PortfolioStorage.render3DViewerMarkup(fileData, mainUrl, 'project-model-viewer')}</div>`;
         }
         if (type === 'pdf' && mainUrl) {
-            const safeName = PortfolioStorage.escapeHtml(fileData.name || work.title || 'PDF');
             return `
                 <div class="project-pdf-download">
                     <div class="project-pdf-download-icon">PDF</div>
@@ -625,7 +729,7 @@ function renderProjectMainMedia(work, mainUrl) {
         `;
     }
 
-    return fallbackImage || `<div class="project-main-file"><div class="file-preview-placeholder file"><div class="file-preview-badge">PROJECT</div><div class="file-preview-name">${PortfolioStorage.escapeHtml(work.title)}</div></div></div>`;
+    return `<div class="project-main-file"><div class="file-preview-placeholder file"><div class="file-preview-badge">PROJECT</div><div class="file-preview-name">${safeTitle}</div></div></div>`;
 }
 
 function renderFactCard(label, value) {
@@ -698,6 +802,7 @@ function ensureMediaLightbox() {
         <div class="project-media-lightbox-footer">
             <span class="project-media-lightbox-name"></span>
             <span class="project-media-lightbox-counter"></span>
+            <div class="project-media-lightbox-dots"></div>
         </div>
     `;
     document.body.appendChild(lightbox);
@@ -708,6 +813,12 @@ function ensureMediaLightbox() {
     lightbox.querySelector('.project-media-lightbox-close')?.addEventListener('click', closeMediaLightbox);
     lightbox.querySelector('.project-media-lightbox-nav.prev')?.addEventListener('click', () => changeMediaLightbox(-1));
     lightbox.querySelector('.project-media-lightbox-nav.next')?.addEventListener('click', () => changeMediaLightbox(1));
+    bindHorizontalSwipe(
+        lightbox.querySelector('.project-media-lightbox-stage'),
+        () => changeMediaLightbox(1),
+        () => changeMediaLightbox(-1),
+        { threshold: 38 }
+    );
 
     return lightbox;
 }
@@ -738,6 +849,7 @@ function renderMediaLightbox() {
     const counter = lightbox.querySelector('.project-media-lightbox-counter');
     const prev = lightbox.querySelector('.project-media-lightbox-nav.prev');
     const next = lightbox.querySelector('.project-media-lightbox-nav.next');
+    const dots = lightbox.querySelector('.project-media-lightbox-dots');
 
     stage.innerHTML = current.type === 'video'
         ? `<video src="${current.url}" controls autoplay playsinline></video>`
@@ -748,6 +860,18 @@ function renderMediaLightbox() {
     const hasMany = items.length > 1;
     prev.hidden = !hasMany;
     next.hidden = !hasMany;
+
+    if (dots) {
+        dots.innerHTML = hasMany ? items.map((_, index) => `
+            <button type="button" class="project-media-lightbox-dot ${index === portfolioState.lightboxIndex ? 'active' : ''}" data-lightbox-dot="${index}" aria-label="Медиа ${index + 1}"></button>
+        `).join('') : '';
+        dots.querySelectorAll('[data-lightbox-dot]').forEach(dot => {
+            dot.addEventListener('click', () => {
+                portfolioState.lightboxIndex = Number(dot.dataset.lightboxDot || 0);
+                renderMediaLightbox();
+            });
+        });
+    }
 }
 
 function changeMediaLightbox(direction = 1) {
